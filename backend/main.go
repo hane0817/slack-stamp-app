@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"image/color"
 	"log"
@@ -10,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/fogleman/gg"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 type RequestData struct {
@@ -17,15 +18,14 @@ type RequestData struct {
 	Color string `json:"textColor"`
 }
 
-// HEX 文字列を color.RGBA に変換する関数
 func hexToRGBA(hex string) color.RGBA {
-	hex = strings.TrimPrefix(hex, "#") // `#` を削除
+	hex = strings.TrimPrefix(hex, "#")
 
-	var r, g, b, a uint8 = 0, 0, 0, 255 // デフォルトの色（黒）+ 不透明
+	var r, g, b, a uint8 = 0, 0, 0, 255
 	switch len(hex) {
-	case 6: // RGB (例: #FF0000)
+	case 6:
 		fmt.Sscanf(hex, "%02x%02x%02x", &r, &g, &b)
-	case 8: // RGBA (例: #FF0000FF)
+	case 8:
 		fmt.Sscanf(hex, "%02x%02x%02x%02x", &r, &g, &b, &a)
 	}
 
@@ -37,10 +37,10 @@ func generateImage(text, hexColor string) string {
 	const height = 200
 
 	dc := gg.NewContext(width, height)
-	dc.SetRGB(1, 1, 1) // 背景色（白）
+	dc.SetRGB(1, 1, 1)
 	dc.Clear()
 
-	dc.SetColor(hexToRGBA(hexColor)) // ユーザー指定の色を適用
+	dc.SetColor(hexToRGBA(hexColor))
 	if err := dc.LoadFontFace("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 40); err != nil {
 		log.Fatal(err)
 	}
@@ -52,39 +52,32 @@ func generateImage(text, hexColor string) string {
 	return outputPath
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*") // CORS 対応
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
+func generateHandler(c *gin.Context) {
 	var requestData RequestData
-	err := json.NewDecoder(r.Body).Decode(&requestData)
-	if err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&requestData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	log.Println("受信データ:", requestData) // ← デバッグ用のログを追加
+	log.Println("受信データ:", requestData)
 
 	imgPath := generateImage(requestData.Text, requestData.Color)
-	imgFile, err := os.Open(imgPath)
-	if err != nil {
-		http.Error(w, "Failed to generate image", http.StatusInternalServerError)
+	if _, err := os.Stat(imgPath); os.IsNotExist(err) {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate image"})
 		return
 	}
-	defer imgFile.Close()
 
-	w.Header().Set("Content-Type", "image/png")
-	http.ServeFile(w, r, imgPath)
+	c.File(imgPath)
 }
 
 func main() {
-	http.HandleFunc("/generate", handler)
+	r := gin.Default()
+
+	// CORS ミドルウェアを設定
+	r.Use(cors.Default())
+
+	r.POST("/generate", generateHandler)
+
 	log.Println("Server running on :8080")
-	http.ListenAndServe(":8080", nil)
+	r.Run(":8080")
 }
