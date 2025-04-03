@@ -18,7 +18,7 @@ function App() {
 
   const generateImage = async () => {
     try {
-      const response = await axios.post("http://localhost:8080/generate", {
+      const response = await axios.post("http://localhost:8080/api/generate", {
         text,
         textColor
       }, { responseType: "blob" }); // 画像をバイナリデータで受け取る
