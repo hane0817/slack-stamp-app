@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Login from "./Login";
 import Generate from "./Generate";
 import Register from "./Register";
+import Header from "./Header";
 
 function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
@@ -16,6 +17,7 @@ function App() {
 
   return (
     <Router>
+      {token && <Header setToken={setToken} />}
       <Routes>
         <Route path="/login" element={<Login setToken={setToken} />} />
         <Route path="/register" element={<Register />} />
