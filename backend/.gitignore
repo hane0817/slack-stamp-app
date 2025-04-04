@@ -1,3 +1,4 @@
-post_cmd.txt
-pre_cmd.txt
-output.png
+*.png
+tmp
+*.txt
+*.toml
