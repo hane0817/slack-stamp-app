@@ -8,6 +8,7 @@ function Generate() {
 
     const [text, setText] = useState<string>(`HELLO`);
     const [textColor, setTextColor] = useState('#FFFFFF');
+    const [language, setLanguage] = useState<'japanese' | 'chinese'>('japanese');
     const changeTextColor = (color: ColorResult) => {
         setTextColor(color.hex)
     }
@@ -19,7 +20,8 @@ function Generate() {
         try {
             const response = await axios.post("http://localhost:8080/api/generate", {
                 text,
-                textColor
+                textColor,
+                language
             }, { responseType: "blob" }); // 画像をバイナリデータで受け取る
 
             const imageBlob = new Blob([response.data], { type: "image/png" });
@@ -33,6 +35,14 @@ function Generate() {
 
     return (
         <div>
+            <div>
+                <button onClick={() => setLanguage('japanese')} disabled={language === 'japanese'}>
+                    日本語
+                </button>
+                <button onClick={() => setLanguage('chinese')} disabled={language === 'chinese'}>
+                    中国語
+                </button>
+            </div>
 
             <form onSubmit={(e) => e.preventDefault()}>
                 <input

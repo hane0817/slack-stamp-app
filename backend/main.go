@@ -17,8 +17,9 @@ import (
 )
 
 type RequestData struct {
-	Text  string `json:"text"`
-	Color string `json:"textColor"`
+	Text     string `json:"text"`
+	Color    string `json:"textColor"`
+	Language string `json:"language"`
 }
 
 func hexToRGBA(hex string) color.RGBA {
@@ -35,7 +36,7 @@ func hexToRGBA(hex string) color.RGBA {
 	return color.RGBA{r, g, b, a}
 }
 
-func generateImage(text, hexColor string) string {
+func generateImage(text, hexColor, language string) string {
 	const width = 400
 	const height = 200
 
@@ -44,8 +45,15 @@ func generateImage(text, hexColor string) string {
 	dc.Clear()
 
 	dc.SetColor(hexToRGBA(hexColor))
-	if err := dc.LoadFontFace("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 40); err != nil {
-		log.Fatal(err)
+
+	if language == "japanese" {
+		if err := dc.LoadFontFace("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 40); err != nil {
+			log.Fatal(err)
+		}
+	} else if language == "chinese" {
+		if err := dc.LoadFontFace("/go/src/static/NotoSerifSC-Regular.ttf", 40); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	dc.DrawStringAnchored(text, width/2, height/2, 0.5, 0.5)
@@ -64,7 +72,7 @@ func generateHandler(c *gin.Context) {
 
 	log.Println("受信データ:", requestData)
 
-	imgPath := generateImage(requestData.Text, requestData.Color)
+	imgPath := generateImage(requestData.Text, requestData.Color, requestData.Language)
 	if _, err := os.Stat(imgPath); os.IsNotExist(err) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate image"})
 		return
