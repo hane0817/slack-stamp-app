@@ -70,7 +70,7 @@ function Generate() {
 
             <button onClick={generateImage}>画像を生成</button>
             <br />
-            {imageUrl && <img src={imageUrl} alt="Generated Image" />}
+            {imageUrl && <img src={imageUrl} alt="" />}
         </div>
 
 
