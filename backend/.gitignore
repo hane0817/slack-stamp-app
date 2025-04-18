@@ -1,5 +1,4 @@
 *.png
 tmp
 *.txt
-*.toml
 static

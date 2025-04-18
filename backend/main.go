@@ -47,11 +47,11 @@ func generateImage(text, hexColor, language string) string {
 	dc.SetColor(hexToRGBA(hexColor))
 
 	if language == "japanese" {
-		if err := dc.LoadFontFace("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 40); err != nil {
+		if err := dc.LoadFontFace("/go/src/font/DejaVuSans-Bold.ttf", 40); err != nil {
 			log.Fatal(err)
 		}
 	} else if language == "chinese" {
-		if err := dc.LoadFontFace("/go/src/static/NotoSerifSC-Regular.ttf", 40); err != nil {
+		if err := dc.LoadFontFace("/go/src/font/NotoSerifSC-Regular.ttf", 40); err != nil {
 			log.Fatal(err)
 		}
 	}
