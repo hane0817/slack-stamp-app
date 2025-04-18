@@ -47,7 +47,7 @@ func generateImage(text, hexColor, language string) string {
 	dc.SetColor(hexToRGBA(hexColor))
 
 	if language == "japanese" {
-		if err := dc.LoadFontFace("/go/src/font/DejaVuSans-Bold.ttf", 40); err != nil {
+		if err := dc.LoadFontFace("/go/src/font/NotoSansJP-VariableFont_wght.ttf", 40); err != nil {
 			log.Fatal(err)
 		}
 	} else if language == "chinese" {
