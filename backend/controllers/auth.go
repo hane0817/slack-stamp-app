@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"backend/usecase"
 	"database/sql"
 	"fmt"
 	"log"
@@ -32,7 +33,7 @@ func Register(c *gin.Context) {
 	})
 }
 
-// ユーザー登録
+// ユーザー登録　オニオン　外側　infrastructure
 func RegisterUser(c *gin.Context) {
 	var req struct {
 		Name     string `json:"name"`
@@ -44,22 +45,33 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 
-	// パスワードをハッシュ化
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-		return
+	// コントローラーがアプリケーションに依存するように入れなおす
+	input := usecase.RegisterUserInput{
+		Name:     req.Name,
+		Password: req.Password,
 	}
 
-	// DB に保存
-	result, err := Db.Exec("INSERT INTO users (name, password) VALUES (?, ?)", req.Name, string(hashedPassword))
+	result, err := usecase.RegisterUser(Db, input)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
 		return
 	}
 
-	id, _ := result.LastInsertId()
-	c.JSON(http.StatusOK, gin.H{"id": id, "name": req.Name})
+	// パスワードをハッシュ化　分割
+	// hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+	// 	return
+	// }
+
+	// DB に保存 明示的にトランザクションをはろう　分割
+	// result, err := Db.Exec("INSERT INTO users (name, password) VALUES (?, ?)", req.Name, string(hashedPassword))
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
+	// 	return
+	// }
+
+	c.JSON(http.StatusOK, gin.H{"id": result.ID, "name": result.Name})
 }
 
 // JWTの秘密鍵
@@ -128,6 +140,7 @@ func authMiddleware(c *gin.Context) {
 
 var Db *sql.DB
 
+// main関数で呼び出す　定義
 func InitDB() {
 	var err error
 	dsn := "root:root_pass@tcp(db:3306)/database"
