@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"image/color"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"backend/controllers"
 
@@ -16,35 +14,47 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+type RGBA struct {
+	R uint8   `json:"r"`
+	G uint8   `json:"g"`
+	B uint8   `json:"b"`
+	A float64 `json:"a"` // 0.0 ~ 1.0
+}
+
 type RequestData struct {
-	Text     string `json:"text"`
-	Color    string `json:"textColor"`
-	Language string `json:"language"`
+	Text            string `json:"text"`
+	TextColor       RGBA   `json:"textColor"`
+	BackgroundColor RGBA   `json:"backgroundColor"`
+	Language        string `json:"language"`
 }
 
-func hexToRGBA(hex string) color.RGBA {
-	hex = strings.TrimPrefix(hex, "#")
-
-	var r, g, b, a uint8 = 0, 0, 0, 255
-	switch len(hex) {
-	case 6:
-		fmt.Sscanf(hex, "%02x%02x%02x", &r, &g, &b)
-	case 8:
-		fmt.Sscanf(hex, "%02x%02x%02x%02x", &r, &g, &b, &a)
+func toColorRGBA(input RGBA) color.RGBA {
+	return color.RGBA{
+		R: input.R,
+		G: input.G,
+		B: input.B,
+		A: uint8(input.A * 255), // float64 → uint8 に変換
 	}
-
-	return color.RGBA{r, g, b, a}
 }
 
-func generateImage(text, hexColor, language string) string {
+func generateImage(text string, TextColor RGBA, BackgroundColor RGBA, language string) string {
 	const width = 400
 	const height = 200
 
 	dc := gg.NewContext(width, height)
-	dc.SetRGB(1, 1, 1)
-	dc.Clear()
 
-	dc.SetColor(hexToRGBA(hexColor))
+	if BackgroundColor.A > 0 {
+		bg := color.NRGBA{
+			R: BackgroundColor.R,
+			G: BackgroundColor.G,
+			B: BackgroundColor.B,
+			A: uint8(BackgroundColor.A * 255),
+		}
+		dc.SetColor(bg)
+		dc.Clear()
+	}
+
+	dc.SetColor(toColorRGBA(TextColor))
 
 	if language == "japanese" {
 		if err := dc.LoadFontFace("/go/src/font/NotoSansJP-VariableFont_wght.ttf", 40); err != nil {
@@ -72,7 +82,7 @@ func generateHandler(c *gin.Context) {
 
 	log.Println("受信データ:", requestData)
 
-	imgPath := generateImage(requestData.Text, requestData.Color, requestData.Language)
+	imgPath := generateImage(requestData.Text, requestData.TextColor, requestData.BackgroundColor, requestData.Language)
 	if _, err := os.Stat(imgPath); os.IsNotExist(err) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate image"})
 		return
