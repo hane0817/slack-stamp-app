@@ -9,6 +9,18 @@ type RGBA = {
     a: number;
 };
 
+type Effects = {
+    fog: boolean;
+    glitch: boolean;
+    sparkle: boolean;
+};
+
+const defaultEffects: Effects = {
+    fog: false,
+    glitch: false,
+    sparkle: false,
+};
+
 function rgbaToCSS(rgba: RGBA): string {
     return `rgba(${rgba.r}, ${rgba.g}, ${rgba.b}, ${rgba.a})`;
 }
@@ -21,6 +33,14 @@ function Generate() {
     const [backgroundColor, setBackgroundColor] = useState<RGBA>({ r: 0, g: 0, b: 0, a: 1 });
     const [showPicker, setShowPicker] = useState<'text' | 'background' | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [effects, setEffects] = useState<Effects>(defaultEffects);
+
+    const handleEffectChange = (effect: keyof Effects) => {
+        setEffects(prev => ({
+            ...prev,
+            [effect]: !prev[effect],
+        }));
+    };
 
     const generateImage = async () => {
         try {
@@ -28,7 +48,12 @@ function Generate() {
                 text,
                 textColor,
                 backgroundColor,
-                language
+                language,
+                effects: {
+                    fog: effects.fog,
+                    glitch: effects.glitch,
+                    sparkle: effects.sparkle,
+                },
             }, { responseType: "blob" });
 
             const imageBlob = new Blob([response.data], { type: "image/png" });
@@ -93,6 +118,34 @@ function Generate() {
 
                 />
             )}
+            {/* エフェクトチェックボックス */}
+            <fieldset>
+                <legend>エフェクト</legend>
+                <label>
+                    <input
+                        type="checkbox"
+                        checked={effects.fog}
+                        onChange={() => handleEffectChange('fog')}
+                    />
+                    fog
+                </label>
+                <label>
+                    <input
+                        type="checkbox"
+                        checked={effects.glitch}
+                        onChange={() => handleEffectChange('glitch')}
+                    />
+                    Glitch
+                </label>
+                <label>
+                    <input
+                        type="checkbox"
+                        checked={effects.sparkle}
+                        onChange={() => handleEffectChange('sparkle')}
+                    />
+                    Sparkle
+                </label>
+            </fieldset>
 
             {/* プレビュー */}
             <div style={{
