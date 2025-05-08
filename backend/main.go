@@ -23,6 +23,15 @@ type RGBA struct {
 	A float64 `json:"a"` // 0.0 ~ 1.0
 }
 
+type Effect struct {
+	None   bool `json:"none"`
+	Glitch bool `json:"glitch"`
+	Jitter bool `json:"jitter"`
+	Rotate bool `json:"rotate"`
+	Shadow bool `json:"shadow"`
+	Blur   bool `json:"blur"`
+}
+
 type RequestData struct {
 	Text            string `json:"text"`
 	TextColor       RGBA   `json:"textColor"`
@@ -94,6 +103,55 @@ func generateHandler(c *gin.Context) {
 	c.File(imgPath)
 }
 
+// func (scdb *StampController) PostStampHandler(c *gin.Context) {
+// 	var stamp StampRequestData
+// 	if err := c.ShouldBindJSON(&stamp); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	jsonBytes, err := json.Marshal(stamp)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to encode JSON"})
+// 		return
+// 	}
+
+// 	_, err = scdb.db.Exec(`
+//         INSERT INTO stamps (json_data, created_at)
+//         VALUES (?, NOW())`, string(jsonBytes))
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB error"})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, gin.H{"status": "saved"})
+// }
+
+// func (sc *StampController) GETStampHandler(c *gin.Context) {
+// 	rows, err := sc.db.Query(`SELECT json_data FROM stamps ORDER BY created_at DESC LIMIT 20`)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB error"})
+// 		return
+// 	}
+// 	defer rows.Close()
+
+// 	var results []map[string]interface{}
+
+// 	for rows.Next() {
+// 		var jsonStr string
+// 		if err := rows.Scan(&jsonStr); err != nil {
+// 			continue
+// 		}
+
+// 		var data map[string]interface{}
+// 		if err := json.Unmarshal([]byte(jsonStr), &data); err == nil {
+// 			results = append(results, data)
+// 		}
+// 	}
+
+// 	c.JSON(http.StatusOK, results)
+// }
+
 func InitDB() *sql.DB {
 	var err error
 	dsn := "root:root_pass@tcp(db:3306)/database"
@@ -107,6 +165,15 @@ func InitDB() *sql.DB {
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		name VARCHAR(100) NOT NULL,
 		password VARCHAR(255) NOT NULL
+	);`)
+	if err != nil {
+		log.Fatal("Failed to create table:", err)
+	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS stamps (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		json_data JSON NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`)
 	if err != nil {
 		log.Fatal("Failed to create table:", err)
@@ -141,6 +208,11 @@ func main() {
 	public.POST("/generate", generateHandler)
 
 	public.POST("/register", controllers.Register)
+
+	stampController := controllers.NewStampController(db)
+
+	public.POST("/stamp/post", stampController.PostStampHandler)
+	public.GET("/stamp/get", stampController.GETStampHandler)
 
 	log.Println("Server running on :8080")
 	r.Run(":8080")

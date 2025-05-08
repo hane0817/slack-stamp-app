@@ -1,21 +1,19 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
+import axios from 'axios';
 
-type Props = {
-    text: string;
-    fontSize?: number;
-    textColor?: string;
-    backgroundColor?: string;
-    selectedEffect?: 'none' | 'glitch' | 'jitter' | 'rotate' | 'shadow' | 'blur';
-};
+const EFFECTS = ['none', 'glitch', 'jitter', 'rotate', 'shadow', 'blur'] as const;
+type EffectType = typeof EFFECTS[number];
 
-const TextEffectCanvas: React.FC<Props> = ({
-    text,
-    fontSize = 48,
-    textColor = '#FFFFFF',
-    backgroundColor = '#000000',
-    selectedEffect = 'none',
-}) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+
+
+export function TextEffectCanvas(
+    text: string,
+    textColor: string,
+    backgroundColor: string,
+    language: 'japanese' | 'chinese',
+    selectedEffect: EffectType) {
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -78,7 +76,23 @@ const TextEffectCanvas: React.FC<Props> = ({
         }
     }, [text, textColor, backgroundColor, selectedEffect]);
 
-    return <canvas ref={canvasRef} />;
+    const sendStamp = async () => {
+        try {
+            await axios.post('http://localhost:8080/api/stamp/post', {
+                text: text,
+                textColor: textColor,
+                backgroundColor: backgroundColor,
+                language: language,
+                selectedEffect: selectedEffect,
+            });
+            alert('スタンプを送信しました');
+        } catch (err) {
+            console.error('送信失敗:', err);
+            alert('送信に失敗しました');
+        }
+    };
+
+    return { canvasRef, sendStamp };
 };
 
 export default TextEffectCanvas;

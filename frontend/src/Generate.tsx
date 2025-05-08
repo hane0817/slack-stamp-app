@@ -1,7 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import axios from "axios";
-import { ColorResult, SketchPicker } from 'react-color';
+import { SketchPicker } from 'react-color';
 import TextEffectCanvas from './TextEffectCanvas';
+import RecentStamps from "./RecentStamps";
 
 type RGBA = {
     r: number;
@@ -27,7 +28,6 @@ function Generate() {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [selectedEffect, setSelectedEffect] = useState<EffectType>('none');
     const [showEffectOptions, setShowEffectOptions] = useState(false);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
 
 
     const generateImage = async () => {
@@ -46,6 +46,14 @@ function Generate() {
             alert("画像生成に失敗しました");
         }
     };
+
+    const { canvasRef, sendStamp } = TextEffectCanvas(
+        text,
+        rgbaToCSS(textColor),
+        rgbaToCSS(backgroundColor),
+        language,
+        selectedEffect,
+    );
 
     return (
         <div>
@@ -136,12 +144,15 @@ function Generate() {
 
             </div>
 
-            <TextEffectCanvas
-                text={text}
-                textColor={rgbaToCSS(textColor)}
-                backgroundColor={rgbaToCSS(backgroundColor)}
-                selectedEffect={selectedEffect}
-            />
+            <canvas ref={canvasRef} />
+
+            <div><button onClick={sendStamp}>送信</button>
+            </div>
+
+            <div>
+                <h1>最近作成されたスタンプ</h1>
+                <RecentStamps />
+            </div>
 
         </div>
     );
