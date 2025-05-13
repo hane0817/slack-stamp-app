@@ -57,20 +57,6 @@ func RegisterUser(c *gin.Context) {
 		return
 	}
 
-	// パスワードをハッシュ化　分割
-	// hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
-	// 	return
-	// }
-
-	// DB に保存 明示的にトランザクションをはろう　分割
-	// result, err := Db.Exec("INSERT INTO users (name, password) VALUES (?, ?)", req.Name, string(hashedPassword))
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
-	// 	return
-	// }
-
 	c.JSON(http.StatusOK, gin.H{"id": result.ID, "name": result.Name})
 }
 
@@ -119,23 +105,6 @@ func LoginUser(c *gin.Context) {
 	c.Header("Authorization", tokenString)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful!"})
-}
-
-func authMiddleware(c *gin.Context) {
-	// Authorizationヘッダーからトークンを取得
-	tokenString := c.GetHeader("Authorization")
-
-	// トークンの検証
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(SECRET_KEY), nil
-	})
-	if err != nil || !token.Valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
-		c.Abort()
-		return
-	}
-
-	c.Next()
 }
 
 var Db *sql.DB

@@ -3,6 +3,7 @@ import axios from "axios";
 import { SketchPicker } from 'react-color';
 import TextEffectCanvas from './TextEffectCanvas';
 import RecentStamps from "./RecentStamps";
+import './Generate.css';
 
 type RGBA = {
     r: number;
@@ -19,8 +20,7 @@ function rgbaToCSS(rgba: RGBA): string {
 }
 
 function Generate() {
-
-    const [text, setText] = useState<string>(`HELLO`);
+    const [text, setText] = useState('HELLO');
     const [language, setLanguage] = useState<'japanese' | 'chinese'>('japanese');
     const [textColor, setTextColor] = useState<RGBA>({ r: 255, g: 255, b: 255, a: 1 });
     const [backgroundColor, setBackgroundColor] = useState<RGBA>({ r: 0, g: 0, b: 0, a: 1 });
@@ -28,7 +28,6 @@ function Generate() {
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [selectedEffect, setSelectedEffect] = useState<EffectType>('none');
     const [showEffectOptions, setShowEffectOptions] = useState(false);
-
 
     const generateImage = async () => {
         try {
@@ -56,104 +55,146 @@ function Generate() {
     );
 
     return (
-        <div>
-            {/* 言語切り替え */}
-            <div>
-                <button onClick={() => setLanguage('japanese')} disabled={language === 'japanese'}>日本語</button>
-                <button onClick={() => setLanguage('chinese')} disabled={language === 'chinese'}>中国語</button>
-            </div>
+        <div className="min-h-screen bg-gray-100 py-8 px-4">
+            <div className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow-md space-y-6">
 
-            {/* 入力 */}
-            <form onSubmit={(e) => e.preventDefault()}>
-                <input
-                    type="text"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                />
-                <input type="submit" />
-            </form>
+                {/* 言語切り替え */}
+                <div className="flex space-x-2">
+                    <button
+                        onClick={() => setLanguage('japanese')}
+                        disabled={language === 'japanese'}
+                        className={`px-4 py-2 rounded ${language === 'japanese' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                    >
+                        日本語
+                    </button>
+                    <button
+                        onClick={() => setLanguage('chinese')}
+                        disabled={language === 'chinese'}
+                        className={`px-4 py-2 rounded ${language === 'chinese' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                    >
+                        中国語
+                    </button>
+                </div>
 
-            {/* カラーピッカー切り替え */}
-            <div>
-                <button onClick={() => setShowPicker('text')}>文字色を選ぶ</button>
-                <button onClick={() => setShowPicker('background')}>背景色を選ぶ</button>
-            </div>
+                {/* 入力 */}
+                <form onSubmit={(e) => e.preventDefault()} className="flex space-x-2">
+                    <input
+                        type="text"
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        className="flex-grow border border-gray-300 px-4 py-2 rounded"
+                    />
+                    <input
+                        type="submit"
+                        value="決定"
+                        className="bg-blue-500 text-white px-4 py-2 rounded"
+                    />
+                </form>
 
-            {/* カラーピッカー本体 */}
-            {showPicker === 'text' && (
-                <SketchPicker
-                    color={textColor}
-                    onChange={(color) => {
-                        const rgba = color.rgb;
-                        setTextColor({
-                            r: rgba.r,
-                            g: rgba.g,
-                            b: rgba.b,
-                            a: rgba.a ?? 1  // aがundefinedなら1を使う
-                        });
+                {/* カラーピッカー切り替え */}
+                <div className="flex space-x-2">
+                    <button onClick={() => setShowPicker('text')} className="bg-indigo-500 text-white px-4 py-2 rounded">
+                        文字色を選ぶ
+                    </button>
+                    <button onClick={() => setShowPicker('background')} className="bg-indigo-500 text-white px-4 py-2 rounded">
+                        背景色を選ぶ
+                    </button>
+                </div>
+
+                {/* カラーピッカー本体 */}
+                <div className="space-y-4">
+                    {showPicker === 'text' && (
+                        <SketchPicker
+                            color={textColor}
+                            onChange={(color) => {
+                                const rgba = color.rgb;
+                                setTextColor({ r: rgba.r, g: rgba.g, b: rgba.b, a: rgba.a ?? 1 });
+                            }}
+                        />
+                    )}
+                    {showPicker === 'background' && (
+                        <SketchPicker
+                            color={backgroundColor}
+                            onChange={(color) => {
+                                const rgba = color.rgb;
+                                setBackgroundColor({ r: rgba.r, g: rgba.g, b: rgba.b, a: rgba.a ?? 1 });
+                            }}
+                        />
+                    )}
+                </div>
+
+                {/* プレビュー */}
+                <div
+                    className="text-center font-bold text-2xl py-4 rounded"
+                    style={{
+                        color: rgbaToCSS(textColor),
+                        backgroundColor: rgbaToCSS(backgroundColor),
                     }}
+                >
+                    {text}
+                </div>
 
-                />
-            )}
-            {showPicker === 'background' && (
-                <SketchPicker
-                    color={backgroundColor}
-                    onChange={(color) => {
-                        const rgba = color.rgb;
-                        setBackgroundColor({
-                            r: rgba.r,
-                            g: rgba.g,
-                            b: rgba.b,
-                            a: rgba.a ?? 1
-                        });
-                    }}
+                <div>
+                    <button
+                        onClick={generateImage}
+                        className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded"
+                    >
+                        画像を生成
+                    </button>
+                </div>
 
-                />
-            )}
-
-            {/* プレビュー */}
-            <div style={{
-                color: rgbaToCSS(textColor),
-                backgroundColor: rgbaToCSS(backgroundColor),
-                padding: '10px',
-                display: 'inline-block'
-            }}>
-                {text}
-            </div>
-            <div><button onClick={generateImage}>画像を生成</button></div>
-
-
-            <div>{imageUrl && <img src={imageUrl} alt="Generated" />}</div>
-
-            <div>
-
-
-                <button onClick={() => setShowEffectOptions(!showEffectOptions)}>
-                    エフェクトを追加
-                </button>
-
-                {showEffectOptions && (
-                    <div>
-                        {EFFECTS.map((effect) => (
-                            <button key={effect} onClick={() => setSelectedEffect(effect)}>
-                                {effect}
-                            </button>
-                        ))}
+                {/* 画像表示 */}
+                {imageUrl && (
+                    <div className="text-center">
+                        <img src={imageUrl} alt="Generated" className="mx-auto mt-4 rounded" />
                     </div>
                 )}
 
+                {/* エフェクト */}
+                <div className="space-y-2">
+                    <button
+                        onClick={() => setShowEffectOptions(!showEffectOptions)}
+                        className="bg-purple-500 text-white px-4 py-2 rounded"
+                    >
+                        エフェクトを追加
+                    </button>
+
+                    {showEffectOptions && (
+                        <div className="flex flex-wrap gap-2">
+                            {EFFECTS.map((effect) => (
+                                <button
+                                    key={effect}
+                                    onClick={() => setSelectedEffect(effect)}
+                                    className={`px-3 py-1 rounded border ${selectedEffect === effect
+                                        ? 'bg-purple-600 text-white'
+                                        : 'bg-gray-100'
+                                        }`}
+                                >
+                                    {effect}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Canvas */}
+                <canvas ref={canvasRef} className="w-full mt-4 border" />
+
+                <div>
+                    <button
+                        onClick={sendStamp}
+                        className="w-full bg-blue-600 text-white py-2 rounded mt-2"
+                    >
+                        送信
+                    </button>
+                </div>
+
+                {/* 最近のスタンプ */}
+                <div className="pt-6">
+                    <h2 className="text-lg font-semibold mb-2">最近作成されたスタンプ</h2>
+                    <RecentStamps />
+                </div>
             </div>
-
-            <canvas ref={canvasRef} />
-
-            <div><button onClick={sendStamp}>送信</button>
-            </div>
-
-            <div>
-                <h1>最近作成されたスタンプ</h1>
-                <RecentStamps />
-            </div>
-
         </div>
     );
 }
