@@ -13,7 +13,7 @@ const Register: React.FC = () => {
         setMessage("");
 
         try {
-            await axios.post("http://localhost:8080/auth/register", { name, password }, {
+            await axios.post("http://localhost:8080/user/register", { name, password }, {
                 headers: {
                     "Content-Type": "application/json",
                 },
