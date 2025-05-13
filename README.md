@@ -22,4 +22,4 @@ Slackのリアクション機能で用いるための文字画像を生成する
 
 ####　注意点
 
- 始めてdocker-compose upを行った場合、backendのサーバとdbの起動がずれることで接続が失敗する可能性があるので、一度docker-compose stop後に再度docker-compose upをすると解決する
+ - 始めてdocker-compose upを行った場合、backendのサーバとdbの起動がずれることで接続が失敗する可能性があるので、一度docker-compose stop後に再度docker-compose upをすると解決する
