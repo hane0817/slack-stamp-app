@@ -12,9 +12,13 @@ export default function RecentStamps() {
     const [stamps, setStamps] = useState<StampData[]>([]);
 
     useEffect(() => {
-        axios.get("http://localhost:8080/api/stamp/get").then((res) => {
-            setStamps(res.data);
-        });
+        axios.get("http://localhost:8080/api/stamp/get")
+            .then((res) => {
+                setStamps(res.data);
+            })
+            .catch((err) => {
+                console.error("Axios GET エラー:", err.response?.data || err.message);
+            });
     }, []);
 
     return (

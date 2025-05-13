@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"database/sql"
-	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -32,15 +31,10 @@ func (scdb *StampController) PostStampHandler(c *gin.Context) {
 		return
 	}
 
-	jsonBytes, err := json.Marshal(stamp)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to encode JSON"})
-		return
-	}
-
-	_, err = scdb.db.Exec(`
-        INSERT INTO stamps (json_data, created_at)
-        VALUES (?, NOW())`, string(jsonBytes))
+	_, err := scdb.db.Exec(`
+    INSERT INTO stamps (text, language, text_color, selected_effects, background_color, created_at)
+    VALUES (?, ?, ?, ?, ?, NOW())`,
+		stamp.Text, stamp.Language, stamp.TextColor, stamp.SelectedEffect, stamp.BackgroundColor)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB error"})
 		return
@@ -50,25 +44,27 @@ func (scdb *StampController) PostStampHandler(c *gin.Context) {
 }
 
 func (sc *StampController) GETStampHandler(c *gin.Context) {
-	rows, err := sc.db.Query(`SELECT json_data FROM stamps ORDER BY created_at DESC LIMIT 20`)
+	rows, err := sc.db.Query(`
+		SELECT text, language, text_color, selected_effects, background_color
+		FROM stamps
+		ORDER BY created_at DESC
+		LIMIT 10;
+	`)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "DB error"})
 		return
 	}
 	defer rows.Close()
 
-	var results []map[string]interface{}
+	var results []StampRequestData
 
 	for rows.Next() {
-		var jsonStr string
-		if err := rows.Scan(&jsonStr); err != nil {
+		var s StampRequestData
+		err := rows.Scan(&s.Text, &s.Language, &s.TextColor, &s.SelectedEffect, &s.BackgroundColor)
+		if err != nil {
 			continue
 		}
-
-		var data map[string]interface{}
-		if err := json.Unmarshal([]byte(jsonStr), &data); err == nil {
-			results = append(results, data)
-		}
+		results = append(results, s)
 	}
 
 	c.JSON(http.StatusOK, results)

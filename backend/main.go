@@ -123,11 +123,38 @@ func InitDB() *sql.DB {
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS stamps (
 		id INT AUTO_INCREMENT PRIMARY KEY,
-		json_data JSON NOT NULL,
+		text TEXT NOT NULL,
+		language VARCHAR(50) NOT NULL,
+		text_color VARCHAR(50) NOT NULL,
+		selected_effects TEXT NOT NULL,
+		background_color VARCHAR(50) NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`)
 	if err != nil {
 		log.Fatal("Failed to create table:", err)
+	}
+
+	// レコードがすでに存在するか確認
+	var count int
+	err = db.QueryRow("SELECT COUNT(*) FROM stamps").Scan(&count)
+	if err != nil {
+		log.Fatal("failed to count stamps: %w", err)
+	}
+
+	if count == 0 {
+		text := "Hello"
+		language := "japanese"
+		textColor := "rgba(255, 0, 0, 1)"
+		selectedeffects := "none"
+		backgroundColor := "rgba(255, 255, 255, 1)"
+
+		_, err = db.Exec("INSERT INTO stamps (`text`, language, text_color, selected_effects, background_color) VALUES (?, ?, ?, ?, ?)", text, language, textColor, selectedeffects, backgroundColor)
+		if err != nil {
+			log.Fatal("Failed to insert stamp or exit stampdata:", err)
+		}
+		log.Println("初期データを挿入")
+	} else {
+		log.Printf("初期データの挿入はスキップ\n")
 	}
 
 	fmt.Println("Database connected!")
@@ -157,8 +184,6 @@ func main() {
 	authGroup.POST("/login", controllers.LoginUser)
 
 	public.POST("/generate", generateHandler)
-
-	public.POST("/register", controllers.Register)
 
 	stampController := controllers.NewStampController(db)
 
